@@ -38,8 +38,8 @@ void init_null(int2048_t* longint){
     for(int i = 0; i < max_d_len; i++){
         longint->digits64[i] = 0;
     }
-    longint->b_length = 1;
-    longint->d_length = 1;
+    longint->b_length = 0;
+    longint->d_length = 0;
     longint->sign = 0;
 }
 
@@ -96,25 +96,39 @@ uint8_t* unstring(char* str, size_t len, int* out_len){
     *out_len = k;
     return arr;
 }
+//Add new number to internal array of int2048_t, change d_length and b_length values
+void push_int2048(int2048_t* longint, uint64_t number, bool is_next){
+    if(longint->d_length + 1 >= max_d_len){
+        printf("Overflow, expected number is bigger than 2048 bit\n");
+    }
+    if(number == 0){
+        longint->d_length++; //addition of zero changes nothing, except the number of ACTIVE values in internal array - we consider this zero as active number
+    } else {
+        longint->d_length++;
+        longint->digits64[longint->d_length - 1] = number;
+        if(!is_next) {      //bit length only increased when there will be no next pushed number (for pack function - to calculate it only at once)
+            int bl = 0;
+            while(number > 0){
+                number >>= 1;
+                bl++;
+            }
+            longint->b_length = bl + (bitrate * longint->d_length);
+        }
+    }
+}
+
 
 //Initialize and pack int2048_t. Needs a string with long number, an int2048_t variable (pointer) and number system as integer
 //Number system here have an integer limitation, obviously so - it`s an input, so we basically use binary, decimal or hex here in most cases
 //After packing, we`ll have a number with it`s key values as 1 struct variable, which can be used for other functions
-void pack_int2048(const unsigned char* large_int, int2048_t* longint, int base){
+void pack_int2048(const char* large_int, int2048_t* longint, int base){
     init_null(longint);
-    if(strlen(large_int) == 1){
-        longint->digits64[0] = large_int[0];
-        longint->d_length = 1;
-        longint->b_length = (large_int[0]>>1 == 0) ? 1 :
-                            (large_int[0]>>2 == 0) ? 2 :
-                            (large_int[0]>>3 == 0) ? 3 : 4;
-            return;
-    }
-    int k = 0, q = 0;
-    int current = 0;
-    for(int i = strlen(large_int); i >= 0; i--){
-        current += large_int[i] * pow(10, k);
-        k++;
+    size_t l1 = strlen(large_int);
+    int l2 = 0;
+    uint64_t current = 0, next = 0;
+    uint8_t* packing = unstring(large_int, l1, &l2);
+    for(int i = 0; i < l2; i++){
+        //still undone, but getting closer to what i need
     }
 }
 
